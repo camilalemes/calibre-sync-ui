@@ -1,0 +1,309 @@
+/* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+}
+
+/* Dark theme */
+body {
+  background-color: #121212;
+  color: #e0e0e0;
+}
+
+/* Material Design dark theme colors */
+.mat-toolbar {
+  background-color: #1f1f1f !important;
+  color: #e0e0e0 !important;
+}
+
+.mat-card {
+  background-color: #1e1e1e !important;
+  color: #e0e0e0 !important;
+}
+
+.mat-card-header .mat-card-title {
+  color: #ffffff !important;
+}
+
+.mat-card-header .mat-card-subtitle {
+  color: #b3b3b3 !important;
+}
+
+.mat-button, .mat-raised-button, .mat-stroked-button {
+  color: #e0e0e0 !important;
+}
+
+.mat-raised-button.mat-primary {
+  background-color: #bb86fc !important;
+  color: #000000 !important;
+}
+
+.mat-raised-button.mat-accent {
+  background-color: #03dac6 !important;
+  color: #000000 !important;
+}
+
+.mat-stroked-button {
+  border-color: #bb86fc !important;
+}
+
+.mat-form-field {
+  color: #e0e0e0 !important;
+}
+
+.mat-form-field .mat-input-element {
+  color: #e0e0e0 !important;
+}
+
+.mat-form-field .mat-form-field-label {
+  color: #b3b3b3 !important;
+}
+
+.mat-form-field.mat-focused .mat-form-field-label {
+  color: #bb86fc !important;
+}
+
+.mat-form-field-underline {
+  background-color: #333333 !important;
+}
+
+.mat-form-field.mat-focused .mat-form-field-underline {
+  background-color: #bb86fc !important;
+}
+
+.mat-icon {
+  color: #e0e0e0 !important;
+}
+
+.mat-progress-bar-fill::after {
+  background-color: #bb86fc !important;
+}
+
+.mat-progress-bar-buffer {
+  background-color: #333333 !important;
+}
+
+.mat-progress-spinner circle, .mat-spinner circle {
+  stroke: #bb86fc !important;
+}
+
+.mat-badge-content {
+  background-color: #bb86fc !important;
+  color: #000000 !important;
+}
+
+/* Snackbar styles */
+.success-snackbar {
+  background-color: #4caf50 !important;
+  color: white !important;
+}
+
+.error-snackbar {
+  background-color: #f44336 !important;
+  color: white !important;
+}
+
+/* Global Material Select Dropdown Dark Theme Fixes */
+.cdk-overlay-container {
+  /* Ensure dropdown panels appear above other content */
+  z-index: 1000;
+  
+  .mat-mdc-select-panel {
+    background-color: rgba(40, 44, 52, 0.98) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+    
+    .mat-mdc-option {
+      color: rgba(255, 255, 255, 0.9) !important;
+      background-color: transparent !important;
+      padding: 12px 16px !important;
+      min-height: 48px !important;
+      transition: all 0.2s ease !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      &:hover,
+      &.mat-mdc-option-highlighted {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        color: rgba(255, 255, 255, 0.95) !important;
+      }
+      
+      &.mat-mdc-option-active,
+      &.mdc-list-item--selected {
+        background-color: rgba(33, 150, 243, 0.15) !important;
+        color: #64b5f6 !important;
+        font-weight: 500 !important;
+      }
+      
+      .mdc-list-item__primary-text {
+        color: inherit !important;
+        font-size: 14px;
+        line-height: 1.4;
+      }
+    }
+  }
+  
+  /* Backdrop styling */
+  .cdk-overlay-backdrop.cdk-overlay-backdrop-showing {
+    background-color: rgba(0, 0, 0, 0.2) !important;
+    backdrop-filter: blur(2px);
+  }
+}
+
+/* Simple form field styling */
+.mat-mdc-form-field.mat-mdc-form-field-appearance-outline {
+  /* Input styling */
+  .mat-mdc-input-element {
+    padding-left: 16px !important;
+    padding-right: 48px !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    caret-color: #2196f3 !important;
+    
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.6) !important;
+    }
+  }
+  
+  /* Select styling */
+  .mat-mdc-select {
+    padding-left: 16px !important;
+    padding-right: 48px !important;
+  }
+  
+  /* Text field wrapper */
+  .mat-mdc-text-field-wrapper {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 4px !important;
+    transition: background-color 0.2s ease !important;
+    
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.08) !important;
+    }
+  }
+  
+  /* Focused state */
+  &.mat-focused {
+    .mat-mdc-text-field-wrapper {
+      background-color: rgba(255, 255, 255, 0.08) !important;
+    }
+    
+    .mdc-notched-outline {
+      .mdc-notched-outline__leading,
+      .mdc-notched-outline__notch,
+      .mdc-notched-outline__trailing {
+        border-color: #2196f3 !important;
+        border-width: 2px !important;
+      }
+    }
+    
+    .mat-mdc-form-field-label {
+      color: #2196f3 !important;
+    }
+  }
+  
+  /* Suffix icon positioning */
+  .mat-mdc-form-field-suffix {
+    position: absolute !important;
+    right: 16px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+  }
+}
+
+/* Fix for dropdown panels above form */
+.mat-mdc-select-panel.mat-mdc-select-panel-above {
+  background-color: rgba(40, 44, 52, 0.98) !important;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Scrollbar styling for dropdown panels */
+.mat-mdc-select-panel {
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
+}
+
+/* Dark theme for Material tabs */
+.mat-mdc-tab-group {
+  background-color: transparent !important;
+  
+  .mat-mdc-tab-header {
+    background-color: transparent !important;
+    
+    .mat-mdc-tab-label-container {
+      background-color: transparent !important;
+      
+      .mat-mdc-tab-list {
+        background-color: transparent !important;
+        
+        .mat-mdc-tab-labels {
+          background-color: rgba(255, 255, 255, 0.05) !important;
+        }
+      }
+    }
+    
+    .mat-mdc-tab-label {
+      color: rgba(255, 255, 255, 0.7) !important;
+      
+      &:hover {
+        color: rgba(255, 255, 255, 0.9) !important;
+      }
+      
+      &.mdc-tab--active {
+        color: rgba(255, 255, 255, 1) !important;
+      }
+    }
+  }
+  
+  .mat-mdc-tab-body-wrapper {
+    background-color: transparent !important;
+    
+    .mat-mdc-tab-body {
+      background-color: transparent !important;
+      
+      .mat-mdc-tab-body-content {
+        background-color: transparent !important;
+      }
+    }
+  }
+}

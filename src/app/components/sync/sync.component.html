@@ -1,0 +1,637 @@
+<div class="sync-container">
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-title">
+        <mat-icon>sync</mat-icon>
+        <h1>Calibre Library Management</h1>
+      </div>
+      <p class="header-subtitle">Synchronize and compare your Calibre library with replica locations</p>
+    </div>
+  </div>
+
+  <mat-tab-group class="main-tabs" animationDuration="300ms" [dynamicHeight]="false" disablePagination="true">
+        <!-- Synchronization Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon>sync</mat-icon>
+            <span>Synchronization</span>
+          </ng-template>
+
+          <div class="tab-content-full">
+            <div class="sync-status-section">
+              <div class="status-header">
+                <h3>Current Status</h3>
+                <div class="status-indicator" [class]="getStatusClass()">
+                  @switch (syncStatus()?.status) {
+                    @case ('idle') {
+                      <mat-icon>check_circle</mat-icon>
+                      <span>Ready</span>
+                    }
+                    @case ('running') {
+                      <mat-spinner diameter="20"></mat-spinner>
+                      <span>Syncing...</span>
+                    }
+                    @case ('completed') {
+                      <mat-icon>check_circle</mat-icon>
+                      <span>Completed</span>
+                    }
+                    @case ('error') {
+                      <mat-icon>error</mat-icon>
+                      <span>Error</span>
+                    }
+                    @default {
+                      <mat-icon>help</mat-icon>
+                      <span>Unknown</span>
+                    }
+                  }
+                </div>
+              </div>
+
+              @if (syncStatus()?.message) {
+                <div class="status-message">
+                  {{ syncStatus()!.message }}
+                </div>
+              }
+
+              @if (syncStatus()?.status === 'running' && syncStatus()?.progress !== undefined) {
+                <div class="progress-section">
+                  <div class="progress-info">
+                    <span>Progress: {{ syncStatus()!.progress }}%</span>
+                    @if (syncStatus()!.files_processed !== undefined && syncStatus()!.total_files !== undefined) {
+                      <span class="file-count">
+                        {{ syncStatus()!.files_processed }} / {{ syncStatus()!.total_files }} files
+                      </span>
+                    }
+                  </div>
+                  <mat-progress-bar mode="determinate" [value]="syncStatus()!.progress!"></mat-progress-bar>
+                </div>
+              }
+            </div>
+
+            <div class="sync-actions">
+              <div class="action-group">
+                <button
+                  mat-raised-button
+                  color="primary"
+                  (click)="startSync(false)"
+                  [disabled]="syncStatus()?.status === 'running'"
+                  class="sync-button">
+                  <mat-icon>sync</mat-icon>
+                  Start Sync
+                </button>
+                
+                <button
+                  mat-stroked-button
+                  (click)="startSync(true)"
+                  [disabled]="syncStatus()?.status === 'running'"
+                  class="dry-run-button">
+                  <mat-icon>preview</mat-icon>
+                  Dry Run
+                </button>
+              </div>
+
+              <div class="action-group">
+                <button
+                  mat-button
+                  (click)="refreshStatus()"
+                  [disabled]="syncStatus()?.status === 'running'"
+                  class="refresh-button">
+                  <mat-icon>refresh</mat-icon>
+                  Refresh Status
+                </button>
+              </div>
+            </div>
+
+            @if (lastSyncResult()) {
+              <div class="sync-results-section">
+                <div class="results-header">
+                  <h4>Last Sync Results</h4>
+                  @if (syncStatus()?.last_sync) {
+                    <span class="last-sync-time">{{ formatDateTime(syncStatus()!.last_sync!) }}</span>
+                  }
+                </div>
+                <div class="sync-summary" [class]="hasErrors(lastSyncResult()!) ? 'has-errors' : 'success'">
+                  <div class="summary-header">
+                    @if (hasErrors(lastSyncResult()!)) {
+                      <mat-icon>warning</mat-icon>
+                      <span>Completed with issues</span>
+                    } @else {
+                      <mat-icon>check_circle</mat-icon>
+                      <span>Successfully completed</span>
+                    }
+                  </div>
+                  <div class="summary-text">
+                    {{ getSyncResultSummary(lastSyncResult()!) }}
+                  </div>
+                </div>
+                
+                <div class="location-results">
+                  @for (location of Object.keys(lastSyncResult()!); track location) {
+                    <div class="location-result">
+                      <div class="location-header">
+                        <strong>{{ getLocationDisplayName(location) }}</strong>
+                      </div>
+                      @if (isErrorResult(lastSyncResult()![location])) {
+                        <div class="error-result">
+                          <mat-icon>error</mat-icon>
+                          Error: {{ getError(lastSyncResult()![location]) }}
+                        </div>
+                      } @else {
+                        @let stats = getStats(lastSyncResult()![location]);
+                        @if (stats) {
+                          <div class="stats-grid">
+                            @if (stats.added > 0) {
+                              <div class="stat-item added">
+                                <mat-icon>add_circle</mat-icon>
+                                <span>{{ stats.added }} added</span>
+                              </div>
+                            }
+                            @if (stats.updated > 0) {
+                              <div class="stat-item updated">
+                                <mat-icon>update</mat-icon>
+                                <span>{{ stats.updated }} updated</span>
+                              </div>
+                            }
+                            @if (stats.deleted > 0) {
+                              <div class="stat-item deleted">
+                                <mat-icon>delete</mat-icon>
+                                <span>{{ stats.deleted }} deleted</span>
+                              </div>
+                            }
+                            @if (stats.unchanged > 0) {
+                              <div class="stat-item unchanged">
+                                <mat-icon>check</mat-icon>
+                                <span>{{ stats.unchanged }} unchanged</span>
+                              </div>
+                            }
+                            @if (stats.ignored > 0) {
+                              <div class="stat-item ignored">
+                                <mat-icon>visibility_off</mat-icon>
+                                <span>{{ stats.ignored }} ignored</span>
+                              </div>
+                            }
+                            @if (stats.errors > 0) {
+                              <div class="stat-item errors">
+                                <mat-icon>error</mat-icon>
+                                <span>{{ stats.errors }} errors</span>
+                              </div>
+                            }
+                            @if (getTotalChanges(stats) === 0 && stats.errors === 0) {
+                              <div class="stat-item no-changes">
+                                <mat-icon>check_circle</mat-icon>
+                                <span>No changes needed</span>
+                              </div>
+                            }
+                          </div>
+
+                          <!-- Detailed file lists -->
+                          @if (hasFileChanges(stats)) {
+                            <div class="file-details-section">
+                              <button mat-button (click)="toggleFileDetails(location)" class="details-toggle">
+                                <mat-icon>{{ isFileDetailsExpanded(location) ? 'expand_less' : 'expand_more' }}</mat-icon>
+                                <span>{{ isFileDetailsExpanded(location) ? 'Hide' : 'Show' }} file details</span>
+                              </button>
+                              
+                              @if (isFileDetailsExpanded(location)) {
+                                <div class="file-details">
+                                  @if (stats.added_files && stats.added_files.length > 0) {
+                                    <div class="file-category added">
+                                      <div class="category-header">
+                                        <mat-icon>add_circle</mat-icon>
+                                        <h5>Added Files ({{ stats.added_files.length }})</h5>
+                                      </div>
+                                      <div class="file-list">
+                                        @for (file of stats.added_files; track file) {
+                                          <div class="file-item">
+                                            <mat-icon>note_add</mat-icon>
+                                            <span>{{ file }}</span>
+                                          </div>
+                                        }
+                                      </div>
+                                    </div>
+                                  }
+
+                                  @if (stats.updated_files && stats.updated_files.length > 0) {
+                                    <div class="file-category updated">
+                                      <div class="category-header">
+                                        <mat-icon>update</mat-icon>
+                                        <h5>Updated Files ({{ stats.updated_files.length }})</h5>
+                                      </div>
+                                      <div class="file-list">
+                                        @for (file of stats.updated_files; track file) {
+                                          <div class="file-item">
+                                            <mat-icon>edit</mat-icon>
+                                            <span>{{ file }}</span>
+                                          </div>
+                                        }
+                                      </div>
+                                    </div>
+                                  }
+
+                                  @if (stats.deleted_files && stats.deleted_files.length > 0) {
+                                    <div class="file-category deleted">
+                                      <div class="category-header">
+                                        <mat-icon>delete</mat-icon>
+                                        <h5>Deleted Files ({{ stats.deleted_files.length }})</h5>
+                                      </div>
+                                      <div class="file-list">
+                                        @for (file of stats.deleted_files; track file) {
+                                          <div class="file-item">
+                                            <mat-icon>delete_forever</mat-icon>
+                                            <span>{{ file }}</span>
+                                          </div>
+                                        }
+                                      </div>
+                                    </div>
+                                  }
+
+                                  @if (stats.ignored_files && stats.ignored_files.length > 0) {
+                                    <div class="file-category ignored">
+                                      <div class="category-header">
+                                        <mat-icon>visibility_off</mat-icon>
+                                        <h5>Ignored Files ({{ stats.ignored_files.length }})</h5>
+                                      </div>
+                                      <div class="file-list">
+                                        @for (file of stats.ignored_files; track file) {
+                                          <div class="file-item">
+                                            <mat-icon>block</mat-icon>
+                                            <span>{{ file }}</span>
+                                          </div>
+                                        }
+                                      </div>
+                                    </div>
+                                  }
+
+                                  @if (stats.error_files && stats.error_files.length > 0) {
+                                    <div class="file-category errors">
+                                      <div class="category-header">
+                                        <mat-icon>error</mat-icon>
+                                        <h5>Files with Errors ({{ stats.error_files.length }})</h5>
+                                      </div>
+                                      <div class="file-list">
+                                        @for (file of stats.error_files; track file) {
+                                          <div class="file-item">
+                                            <mat-icon>error_outline</mat-icon>
+                                            <span>{{ file }}</span>
+                                          </div>
+                                        }
+                                      </div>
+                                    </div>
+                                  }
+                                </div>
+                              }
+                            </div>
+                          }
+                        }
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <div class="sync-info">
+              <h4>About Synchronization</h4>
+              <ul>
+                <li><strong>Regular Sync:</strong> Copies your Calibre library to configured replica locations</li>
+                <li><strong>Dry Run:</strong> Shows what would be copied without making any changes</li>
+                <li>Files are organized by format and renamed using metadata</li>
+                <li>Only new or changed files are copied for efficiency</li>
+                <li>Files removed from Calibre are also removed from replicas</li>
+              </ul>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Library Comparison Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon>compare</mat-icon>
+            <span>Library Comparison</span>
+          </ng-template>
+
+          <div class="tab-content-full">
+            <div class="comparison-actions">
+              <button
+                mat-raised-button
+                color="accent"
+                (click)="compareLibraries()"
+                [disabled]="comparingLibraries()"
+                class="compare-button">
+                @if (comparingLibraries()) {
+                  <mat-spinner diameter="20"></mat-spinner>
+                  Comparing...
+                } @else {
+                  <ng-container>
+                    <mat-icon>compare</mat-icon>
+                    Compare Libraries
+                  </ng-container>
+                }
+              </button>
+            </div>
+
+            @if (comparisonResult()) {
+              <div class="comparison-results">
+                <div class="comparison-header">
+                  <h4>Library Comparison Results</h4>
+                  <div class="comparison-summary">
+                    Comparing: <strong>{{ comparisonResult()?.current_library_path }}</strong>
+                  </div>
+                </div>
+
+                @if (comparisonResult()?.replicas && (comparisonResult()?.replicas?.length || 0) > 0) {
+                  <div class="replica-comparisons">
+                    @for (replica of comparisonResult()!.replicas; track replica.name) {
+                      <mat-card class="replica-comparison">
+                        <mat-card-header>
+                          <mat-card-title class="replica-title">
+                            <mat-icon>{{ replica.status === 'success' ? 'folder' : 'error' }}</mat-icon>
+                            {{ replica.name }}
+                          </mat-card-title>
+                          <mat-card-subtitle>{{ replica.path }}</mat-card-subtitle>
+                        </mat-card-header>
+
+                        <mat-card-content>
+                          @if (replica.status === 'success') {
+                            <div class="comparison-overview">
+                              <div class="overview-stats">
+                                <div class="overview-item">
+                                  <strong>{{ replica.total_calibre_books || 0 }}</strong> books in Main Library
+                                </div>
+                                <div class="overview-item">
+                                  <strong>{{ replica.total_replica_books || 0 }}</strong> books in {{ replica.name }}
+                                </div>
+                                <div class="overview-item">
+                                  <strong>{{ replica.common_books || 0 }}</strong> books in common
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div class="comparison-stats">
+                              <div class="stat-card unique-to-main">
+                                <div class="stat-number">{{ replica.unique_to_main_library }}</div>
+                                <div class="stat-label">Only in Main Library</div>
+                              </div>
+                              <div class="stat-card unique-to-replica">
+                                <div class="stat-number">{{ replica.unique_to_replica }}</div>
+                                <div class="stat-label">Only in {{ replica.name }}</div>
+                              </div>
+                            </div>
+
+                            @if (replica.unique_to_main_library_books && replica.unique_to_main_library_books.length > 0) {
+                              <div class="book-samples detailed">
+                                <h5>Books only in Main Library ({{ replica.unique_to_main_library }} total):</h5>
+                                <div class="detailed-book-list">
+                                  @for (book of replica.unique_to_main_library_books; track book.id || book.title) {
+                                    <div class="detailed-book-item">
+                                      <div class="book-header">
+                                        <div class="book-title">{{ book.title }}</div>
+                                        <div class="book-id">ID: {{ book.id }}</div>
+                                      </div>
+                                      <div class="book-meta">
+                                        <div class="book-author">
+                                          <mat-icon>person</mat-icon>
+                                          {{ book.authors.join(', ') || 'Unknown Author' }}
+                                        </div>
+                                        @if (book.formats && book.formats.length > 0) {
+                                          <div class="book-formats">
+                                            <mat-icon>folder</mat-icon>
+                                            <span>{{ book.formats.join(', ') }}</span>
+                                          </div>
+                                        }
+                                      </div>
+                                    </div>
+                                  }
+                                </div>
+                              </div>
+                            }
+
+                            @if (replica.unique_to_replica_books && replica.unique_to_replica_books.length > 0) {
+                              <div class="book-samples detailed">
+                                <h5>Books only in {{ replica.name }} ({{ replica.unique_to_replica }} total):</h5>
+                                <div class="detailed-book-list">
+                                  @for (book of replica.unique_to_replica_books; track book.id || book.title) {
+                                    <div class="detailed-book-item">
+                                      <div class="book-header">
+                                        <div class="book-title">{{ book.title }}</div>
+                                        <div class="book-id">ID: {{ book.id }}</div>
+                                      </div>
+                                      <div class="book-meta">
+                                        <div class="book-author">
+                                          <mat-icon>person</mat-icon>
+                                          {{ book.authors.join(', ') || 'Unknown Author' }}
+                                        </div>
+                                        @if (book.formats && book.formats.length > 0) {
+                                          <div class="book-formats">
+                                            <mat-icon>folder</mat-icon>
+                                            <span>{{ book.formats.join(', ') }}</span>
+                                          </div>
+                                        }
+                                        @if (book.size) {
+                                          <div class="book-size">
+                                            <mat-icon>storage</mat-icon>
+                                            {{ book.size }}
+                                          </div>
+                                        }
+                                        @if (book.last_modified) {
+                                          <div class="book-date">
+                                            <mat-icon>schedule</mat-icon>
+                                            {{ book.last_modified }}
+                                          </div>
+                                        }
+                                      </div>
+                                    </div>
+                                  }
+                                </div>
+                              </div>
+                            }
+
+                            @if (replica.unique_to_main_library === 0 && replica.unique_to_replica === 0) {
+                              <div class="no-differences">
+                                <mat-icon>check_circle</mat-icon>
+                                <span>Libraries are in sync - no unique books found</span>
+                              </div>
+                            }
+                          } @else {
+                            <div class="error-message">
+                              <mat-icon>error</mat-icon>
+                              <span>{{ replica.error }}</span>
+                            </div>
+                          }
+                        </mat-card-content>
+                      </mat-card>
+                    }
+                  </div>
+                } @else {
+                  <div class="no-replicas">
+                    <mat-icon>info</mat-icon>
+                    <span>No replica locations configured for comparison</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </mat-tab>
+
+        <!-- Sync History Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon>history</mat-icon>
+            <span>Sync History</span>
+          </ng-template>
+
+          <div class="tab-content-full">
+            @if (syncStats()) {
+              <div class="history-stats">
+                <div class="stat-card">
+                  <div class="stat-number">{{ syncStats()?.total_syncs || 0 }}</div>
+                  <div class="stat-label">Total Syncs</div>
+                </div>
+                <div class="stat-card success">
+                  <div class="stat-number">{{ syncStats()?.successful_syncs || 0 }}</div>
+                  <div class="stat-label">Successful</div>
+                </div>
+                <div class="stat-card error">
+                  <div class="stat-number">{{ syncStats()?.failed_syncs || 0 }}</div>
+                  <div class="stat-label">Failed</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-number">{{ syncStats()?.average_duration || 0 }}s</div>
+                  <div class="stat-label">Avg Duration</div>
+                </div>
+              </div>
+            }
+
+            @if (syncHistory() && syncHistory().length > 0) {
+              <div class="history-section">
+                <div class="history-header">
+                  <h4>Recent Synchronizations</h4>
+                  <button mat-icon-button 
+                          (click)="refreshHistory()"
+                          matTooltip="Refresh history">
+                    <mat-icon>refresh</mat-icon>
+                  </button>
+                </div>
+                
+                <div class="history-list">
+                  @for (entry of syncHistory(); track entry.timestamp) {
+                    <mat-card class="history-entry" [class]="'status-' + entry.status">
+                      <div class="entry-header">
+                        <div class="entry-type">
+                          <mat-icon>{{ entry.sync_type === 'dry_run' ? 'preview' : 'sync' }}</mat-icon>
+                          <span class="type-text">{{ entry.sync_type === 'dry_run' ? 'Dry Run' : 'Full Sync' }}</span>
+                          <span class="status-badge" [class]="entry.status">{{ entry.status }}</span>
+                        </div>
+                        <div class="entry-time">
+                          <div class="relative-time">{{ formatTimestamp(entry.timestamp) }}</div>
+                          <div class="absolute-time">{{ formatAbsoluteTime(entry.timestamp) }}</div>
+                        </div>
+                      </div>
+
+                      <div class="entry-details">
+                        <div class="entry-duration">
+                          <mat-icon>schedule</mat-icon>
+                          <span>{{ entry.duration | number:'1.1-1' }}s</span>
+                        </div>
+
+                        <div class="entry-paths">
+                          <div class="library-path">
+                            <mat-icon>folder</mat-icon>
+                            <span>{{ entry.library_path }}</span>
+                          </div>
+                          <div class="replica-paths">
+                            @for (replicaPath of entry.replica_paths; track replicaPath) {
+                              <div class="replica-path">
+                                <mat-icon>arrow_right</mat-icon>
+                                <span>{{ replicaPath }}</span>
+                              </div>
+                            }
+                          </div>
+                        </div>
+
+                        @if (entry.error) {
+                          <div class="entry-error">
+                            <mat-icon>error_outline</mat-icon>
+                            <span>{{ entry.error }}</span>
+                          </div>
+                        }
+
+                        @if (entry.results && Object.keys(entry.results).length > 0) {
+                          <div class="entry-summary">
+                            @for (replicaPath of Object.keys(entry.results); track replicaPath) {
+                              @let result = entry.results[replicaPath];
+                              @if (!result.error) {
+                                @if (result.added > 0) {
+                                  <div class="summary-item added">
+                                    <mat-icon>add</mat-icon>
+                                    <span>{{ result.added }} added</span>
+                                  </div>
+                                }
+                                @if (result.updated > 0) {
+                                  <div class="summary-item updated">
+                                    <mat-icon>edit</mat-icon>
+                                    <span>{{ result.updated }} updated</span>
+                                  </div>
+                                }
+                                @if (result.deleted > 0) {
+                                  <div class="summary-item deleted">
+                                    <mat-icon>delete</mat-icon>
+                                    <span>{{ result.deleted }} deleted</span>
+                                  </div>
+                                }
+                                @if (result.unchanged > 0) {
+                                  <div class="summary-item unchanged">
+                                    <mat-icon>check</mat-icon>
+                                    <span>{{ result.unchanged }} unchanged</span>
+                                  </div>
+                                }
+                                @if (result.ignored > 0) {
+                                  <div class="summary-item ignored">
+                                    <mat-icon>visibility_off</mat-icon>
+                                    <span>{{ result.ignored }} ignored</span>
+                                  </div>
+                                }
+                                @if (result.errors > 0) {
+                                  <div class="summary-item errors">
+                                    <mat-icon>error</mat-icon>
+                                    <span>{{ result.errors }} errors</span>
+                                  </div>
+                                }
+                              } @else {
+                                <div class="summary-item errors">
+                                  <mat-icon>error</mat-icon>
+                                  <span>Failed: {{ result.error }}</span>
+                                </div>
+                              }
+                            }
+                          </div>
+                        }
+                      </div>
+                    </mat-card>
+                  }
+                </div>
+              </div>
+
+              @if (syncHistory().length === 20) {
+                <div class="history-footer">
+                  <span class="history-note">Showing last 20 entries</span>
+                  <button mat-button 
+                          color="warn"
+                          (click)="clearHistory()"
+                          matTooltip="Clear all history">
+                    <mat-icon>delete_sweep</mat-icon>
+                    Clear History
+                  </button>
+                </div>
+              }
+            } @else {
+              <div class="no-history">
+                <mat-icon>history</mat-icon>
+                <h3>No sync history available</h3>
+                <p>History will appear here after your first synchronization</p>
+              </div>
+            }
+          </div>  
+        </mat-tab>
+      </mat-tab-group>
+</div>

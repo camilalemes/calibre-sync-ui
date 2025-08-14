@@ -1,0 +1,15 @@
+.app-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #121212;
+  color: rgba(255, 255, 255, 0.87);
+}
+
+.main-content {
+  flex: 1;
+  height: 100vh;
+  padding: 0;
+  overflow-y: auto;
+  background-color: #121212;
+}
