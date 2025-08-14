@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "ebook-ui": {
+    "calibre-sync-ui": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -61,10 +61,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "ebook-ui:build:production"
+              "buildTarget": "calibre-sync-ui:build:production"
             },
             "development": {
-              "buildTarget": "ebook-ui:build:development"
+              "buildTarget": "calibre-sync-ui:build:development"
             }
           },
           "defaultConfiguration": "development"
