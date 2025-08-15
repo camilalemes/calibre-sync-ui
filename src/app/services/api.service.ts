@@ -1,18 +1,16 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject, throwError, of } from 'rxjs';
 import { catchError, map, shareReplay, tap, timeout } from 'rxjs/operators';
 import { 
   Book, 
   BookCollection, 
-  BookMetadata, 
-  SyncStatus, 
+  BookMetadata,
   SyncStatusResponse, 
   AddBookRequest, 
   ComparisonResult,
   AddBookResponse,
-  DeleteBookResponse,
-  ApiError
+  DeleteBookResponse
 } from '../models/book.model';
 import { environment } from '../../environments/environment';
 
@@ -225,7 +223,7 @@ export class ApiService {
   triggerSync(dryRun: boolean = false): Observable<SyncStatusResponse> {
     const params = new HttpParams().set('dry_run', dryRun.toString());
     
-    return this.http.post<SyncStatusResponse>(`${this.baseUrl}/sync/trigger`, {}, { params }).pipe(
+    return this.http.post<SyncStatusResponse>(`${this.baseUrl}/api/v1/sync/trigger`, {}, { params }).pipe(
       timeout(this.REQUEST_TIMEOUT),
       tap(response => {
         this.syncStatusSubject.next(response);
@@ -237,7 +235,7 @@ export class ApiService {
   }
 
   getSyncStatus(): Observable<SyncStatusResponse> {
-    return this.http.get<SyncStatusResponse>(`${this.baseUrl}/sync/status`).pipe(
+    return this.http.get<SyncStatusResponse>(`${this.baseUrl}/api/v1/sync/status`).pipe(
       timeout(this.REQUEST_TIMEOUT),
       tap(response => this.syncStatusSubject.next(response)),
       catchError(this.handleError<SyncStatusResponse>('getSyncStatus'))
@@ -255,7 +253,7 @@ export class ApiService {
       }
     }
 
-    return this.http.get<ComparisonResult>(`${this.baseUrl}/libraries/compare-all`).pipe(
+    return this.http.get<ComparisonResult>(`${this.baseUrl}/api/v1/libraries/compare-all`).pipe(
       timeout(this.REQUEST_TIMEOUT),
       tap(result => this.setCache(cacheKey, result)),
       shareReplay(1),
